@@ -1,4 +1,4 @@
-# React
+# 1. React
 
 [官方文档](https://react.docschina.org/docs/hello-world.html)
 
@@ -12,11 +12,275 @@ https://cn.vitejs.dev/guide/
 
 https://ant-design.antgroup.com/docs/react/introduce-cn
 
-## ES6
+## 1.1 ES6
 
 ECMAScript6
 
 [JS教程](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Language_Overview)
+
+### 1.1.1 let & const
+
+Two new declaration format in ES6.
+
+In JS, "var" is used to declaration variables, which may cause variable hoisting. 
+
+Variable hoisting means system will implicitly hoist every variable declared by "var" to the top:
+
+```js
+console.log(a)   //output: undefined  != a is not defined
+var a = 10;
+=>
+var a;
+console.log(a)
+var a=10;
+```
+
+`let` removed this feature. With `let`, ES6 added a new domain "Chunk" besides the original "Global" and "Function" domain, which can be represented by `{}`. 
+
+`let ` does not allow duplicate declaration.
+
+`const`s' values can not be deassign-ed or redeclared. But the `object` declared by `const` can change its attribute value. `Object.freeze` can be use to order the unchangeable of attributes. This approach is not suitable for multi-layer object, while a `deepFreeze` function can be encapsulated to solve this problem:
+
+```tsx
+function deepFreeze(obj){
+	Object.freeze(obj);
+    for (let key in obj){
+        if(obj.hasOwnProperty(key) && typeof obj[key]==='object'){
+            deepFreeze(obj[key]);
+        }
+    }
+}
+```
+
+Without `varibale hoisting`, variables declared by let or var are put in temporal dead zone. e.g.
+
+```tsx
+{
+    console.log(typeof a); #warning
+    let a = 10;
+}
+```
+
+Furthermore `let` allows destructing assignments：
+
+```tsx
+let [a,..c,d] = [10,20,30,40];
+console.log(a);console.log(c);
+[a,d]=[d,a]; //swap
+```
+
+Destructing multi-layer object, self-defined variable name and default value:
+
+```tsx
+let person = {
+    name: "Z3"，
+    family:{
+    	fa: "L5",
+	}
+}
+let {name:myname, family:{fa}, age="17"} = person;
+```
+
+In function parameters: 
+
+```tsx
+function fn({name, age}={}){
+    console.log(name, age); //Z3 20
+}
+fn(obj)
+```
+
+### 1.1.2 String extensions
+
+Unicode:
+
+```tsx
+console.log("\uD842 \uDFB7");
+console.log("\u{20BB7}")
+```
+
+Find string:
+
+```tsx
+let str = "abcdefg"
+console.log(str.indexOf("h")); //-1, b->1
+console.log(str.includes("h")); // false
+console.log(str.startsWith("g"));//false, endsWith
+let res = "a".repeat(5);
+console.log(res); //aaaaa
+```
+
+Template string by ``, embedding variable by  ${}: 
+
+```tsx
+let str = `${obj.checked ? `<input type="checkbox" checked/>` :`<input type="checkbox"/>`}
+	<span>name:${obj.name}</span>
+	`;
+document.querySelector("body").innerHTML = str;
+```
+
+### 1.1.3 6+1 data type
+
+Undefined, Null, Boolean, String, Number, Object    +    Symbol
+
+Every `symbol` is unique. No `new` is needed to create a `symbol`, directly using function:
+
+```tsx
+let s1 = Symbol("aha");
+let s2 = Symbol("aha");
+console.log(s1===s2); //false
+```
+
+Symbols can avoid attribute overlapping when adding attributes across modules.
+
+And using Symbol as attribute name, the attribute name will not be returned by `Object.keys(), Object.getOwnPropertyNames(), for...in`
+
+```js
+//a.js
+const NAME = Symbol("name");
+let obj = {
+    [NAME]:"Z3",
+    [Symbol()]:"aha",
+    age:20
+}
+export default obj;
+//b.js
+import Obj from './a.js';
+const NAME = Symbol("name");
+Obj[NAME] = "L4";
+console.log(Obj); //{age:20, Symbol():"Z3",Symbol():"aha",Symbol():"L4"}
+
+for (let key in obj){
+    console.log(key); //age
+}
+console.log(Object.keys(obj)); //["age"]
+```
+
+Symbol attributes can be accessed by `Object.getOwnPropertySymbols(), Reflect.ownKeys()`
+
+Symbol can be used to define private attributes and functions in "Class":
+
+```tsx
+let People = (function(){
+    let name = Symbol("name");
+    class People{
+        constructor(uName){
+            this[name] = uName;
+        }
+        sayName(){
+            console.log(this[name]);
+        }
+    }
+    return People;
+})();
+let Z3 = new People("z3");
+console.log(Z3[Symbol("name")]);//undefined
+Z3.sayName();//z3
+```
+
+### 1.1.4 Function
+
+Default parameter value and Vararg for functions are supported only after ES6.
+
+```{tsx
+function fn(name="z3",cb =fucntion(){}, ...arg){
+    cb();
+}
+fn(undefined,function(){});
+```
+
+Only one Vararg is allowed, and will not impact hidden parameters.
+
+Arrow is allowed, ==but arrow do not have binding with `this`, `this` in arrow will point to the nearest upper layer's `this`. Same for the hidden parameter `arguments`.==
+
+```tsx
+let fn = arg => arg;
+let fn = () => "Z3";
+let fn = () => {return "z3"}
+let fn = () => ({obj})
+```
+
+#### 1.1.4.1 ==0 & null & false==
+
+In JS, `0` can be treated as a falsy value sometimes:
+
+```js
+age = age || 20; //If age == 0 before this code, age will be set to 20
+```
+
+`typeof` operator can be used to handle this situation:
+
+```js
+age = typeof(age !== 'undefined')?age:20
+```
+
+
+
+### 1.1.5 Class
+
+```tsx
+class Dad(name){
+    this.age=20;
+    constructor(name){
+        
+    }
+}
+class Person extends Dad{
+    constructor(name){
+        super(name);
+        this.name = name;
+    }
+    get age(){
+        return Dad.call(this,name); //apply(this,[name]);bind(this)(name);
+    }
+    set age(newval){
+        
+    }
+    static fn(){
+        
+    }
+}
+```
+
+Static members can also be inherited in inheritance; instantiated objects cannot inherit static members.
+
+### 1.1.6 asynchronization
+
+The JS engine operates based on the principle of event loop. It manages tasks using a tasks queue. Some tasks can take a long time to complete, leading to the introduction of asynchronous and synchronous tasks. Asynchronous tasks do not run on the main thread. Instead, they enter the main thread for execution only when the task queue signals that the asynchronous task is ready to be processed. In ES5, asynchronous tasks were handled using callbacks:
+
+```tsx
+function asyncFn(cb){
+    setTimeout(()=>{
+        console.log("async-logic")
+        cb && cb();
+    },1000)
+}
+asyncFn(function(){
+   	console.log("The first time call back print after execution")
+    asyncFn(function(){
+        console.log("The second time.")
+    })
+})
+```
+
+However, excessive use of callbacks can lead to "callback hell". ES6 introduced `Promise` to address this issue.
+
+```tsx
+let p1 = new Promise(function(){
+    
+});
+console.log(p1); //Promise {<pending>}
+let p2 = new Promise(function(resolve, reject){
+    resovle("success...");
+});
+console.log(p2); //Promise {<resolved>:"success..."}
+let p3 = new Promise(function(resolve, reject){
+    reject("reject...");
+});
+console.log(p3); //Promise {<rejected>: "reject..."}
+```
+
+
 
 ## Create-my-react
 
